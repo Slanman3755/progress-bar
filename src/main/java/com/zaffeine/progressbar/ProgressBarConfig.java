@@ -8,12 +8,12 @@ import net.runelite.client.config.ConfigItem;
 public interface ProgressBarConfig extends Config
 {
 	@ConfigItem(
-		keyName = "greeting",
-		name = "Welcome Greeting",
-		description = "The message to show to the user when they login"
+		keyName = "fletching_message",
+		name = "Fletching message",
+		description = "The message to show to the user when they fletch"
 	)
-	default String greeting()
+	default String fletchingMessage()
 	{
-		return "Hello";
+		return "Fletching!";
 	}
 }

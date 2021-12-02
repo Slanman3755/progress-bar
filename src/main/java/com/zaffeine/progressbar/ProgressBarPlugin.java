@@ -1,16 +1,20 @@
 package com.zaffeine.progressbar;
 
 import com.google.inject.Provides;
+
+import javax.annotation.Nullable;
 import javax.inject.Inject;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
-import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.*;
+import net.runelite.api.events.AnimationChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
+
+import java.awt.*;
 
 @Slf4j
 @PluginDescriptor(
@@ -22,32 +26,49 @@ public class ProgressBarPlugin extends Plugin
 	private Client client;
 
 	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
 	private ProgressBarConfig config;
 
+	@Inject
+	private ProgressBarOverlay progressBarOverlay;
+
+	@Getter
+	private boolean isFletching = false;
+
 	@Override
-	protected void startUp() throws Exception
+	protected void startUp()
 	{
-		log.info("Progress Bar started!");
+		overlayManager.add(progressBarOverlay);
 	}
 
 	@Override
-	protected void shutDown() throws Exception
+	protected void shutDown()
 	{
-		log.info("Progress Bar stopped!");
-	}
-
-	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
-	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
-		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Progress Bar says " + config.greeting(), null);
-		}
+		overlayManager.remove(progressBarOverlay);
+		isFletching = false;
 	}
 
 	@Provides
 	ProgressBarConfig provideConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(ProgressBarConfig.class);
+	}
+
+	@Subscribe
+	public void onAnimationChanged(AnimationChanged event)
+	{
+		Actor actor = event.getActor();
+		if (actor instanceof Player)
+		{
+			if (actor.getAnimation() == AnimationID.FLETCHING_ATTACH_FEATHERS_TO_ARROWSHAFT)
+			{
+				isFletching = true;
+				client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", config.fletchingMessage(), null);
+			} else {
+				isFletching = false;
+			}
+		}
 	}
 }
